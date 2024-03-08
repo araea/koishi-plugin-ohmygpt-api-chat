@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-ohmygpt-api-chat",
   "description": "调用 OhMyGPT 官方 API 的聊天插件，提供房间与预设管理系统，暂时只对 Claude AI 有需求，所以没有其他模型。",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
