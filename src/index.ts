@@ -20,12 +20,15 @@ export const usage = `## 😺 使用
 
 export interface Config {
   model: string
+  apiEndpoint: string
   OhMyGPTApiKey: string
   isTextToImageConversionEnabled: boolean
 }
 
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(['claude-3-opus', 'claude-3-sonnet', 'claude-2', 'claude-instant-1']).default('claude-2').description(`模型名称。`),
+  apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/', 'https://aigptx.top/', 'https://cn2us02.opapi.win/']).default('https://apic.ohmygpt.com/')
+    .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
   isTextToImageConversionEnabled: Schema.boolean().default(false).description(`是否开启将文本转为图片的功能（可选），如需启用，需要启用 \`markdownToImage\` 服务。`),
 }) as any
@@ -680,7 +683,7 @@ export function apply(ctx: Context, config: Config) {
   }
 
   async function getAnthropicResponse(messageList: MessageList, systemPrompt: string): Promise<string> {
-    const url = 'https://apic.ohmygpt.com/v1/messages';
+    const url = `${config.apiEndpoint}v1/messages`;
 
     const headers = {
       'Content-Type': 'application/json',
