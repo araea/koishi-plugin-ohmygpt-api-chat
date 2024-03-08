@@ -55,7 +55,9 @@ export interface OhMyGPTRoom {
   roomPresetContent: string
   isPrivate: boolean
   userIdList: string[]
+  usernameList: string[]
   roomBuilderId: string
+  roomBuilderName: string
   quoteId: string
   messageList: MessageList
   isRequesting: boolean;
@@ -85,7 +87,9 @@ export function apply(ctx: Context, config: Config) {
     isPrivate: 'boolean',
     isRequesting: 'boolean',
     userIdList: 'list',
+    usernameList: 'list',
     roomBuilderId: 'string',
+    roomBuilderName: 'string',
     quoteId: 'string',
     messageList: {type: 'json', initial: [] as MessageList}
   }, {
@@ -120,7 +124,7 @@ export function apply(ctx: Context, config: Config) {
           ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {quoteId: session.messageId})
           session.execute(`OhMyGPTChat.房间.对话 ${roomName} ${content}`);
         } else {
-          return await sendMessage(session, `【@${session.username}】\n该房间为私有！\n请联系房主 ${h.at(roomInfo.roomBuilderId)} 邀请你！`);
+          return await sendMessage(session, `【@${session.username}】\n该房间为私有！\n请联系房主 ${roomInfo.roomBuilderName} 邀请你！`);
         }
       } else {
         ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {quoteId: session.messageId})
@@ -265,7 +269,9 @@ export function apply(ctx: Context, config: Config) {
         roomPresetName: roomPresetName,
         isPrivate: false,
         roomBuilderId: session.userId,
+        roomBuilderName: session.username,
         userIdList: [`${session.userId}`],
+        usernameList: [`${session.username}`],
       })
       return await sendMessage(session, `【@${session.username}】\n创建成功！\n您可以直接使用下面的指令调用：\n${roomName} [文本]`)
     })
@@ -410,18 +416,18 @@ export function apply(ctx: Context, config: Config) {
   // 转移房间
   ctx.command('OhMyGPTChat.房间.转移 <roomName> <user>', '转移房间')
     .action(async ({session}, roomName, user) => {
-      const {username} = session
       if (!user || !roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${session.username}】\n请检查输入的参数！`)
       }
       // 判断 user 的 type 是否为 at
-      const match = user.match(/<at\s+id="(\d+)"\s+name=".+?"\/>/);
+      const userIdRegex = /<at id="(?<userId>[^"]+)"(?: name="(?<username>[^"]+)")?\/>/;
+      const match = user.match(userIdRegex); // 检查 content 是否存在再进行匹配
 
-      if (match === null) {
-        return;
+      if (!match) {
+        return await sendMessage(session, '未找到符合要求的用户 ID。');
       }
 
-      const userId = match[1];
+      const {userId, username} = match.groups;
 
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -429,7 +435,7 @@ export function apply(ctx: Context, config: Config) {
       } else if (session.userId !== roomInfo.roomBuilderId) {
         return await sendMessage(session, `【@${session.username}】\n非房主无权转移！`)
       }
-      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomBuilderId: userId})
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomBuilderId: userId, roomBuilderName: username})
       return await sendMessage(session, `【@${session.username}】\n房主已变更！`)
     })
 
@@ -458,17 +464,16 @@ export function apply(ctx: Context, config: Config) {
       if (!roomInfo.isExist) {
         return await sendMessage(session, `【@${session.username}】\n房间名不存在！`)
       }
-      const roomBuilderName = (await session.bot.getGuildMember(guildId, roomInfo.roomBuilderId)).user.id
       if (roomInfo.isPrivate) {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
-房主：【${roomBuilderName}】
+房主：【${roomInfo.roomBuilderName}】
 房间状态：【私有】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】
-房间成员：【${roomInfo.userIdList.map(async (element) => `【${(await session.bot.getGuildMember(guildId, element)).user.id}】`).join("，")}】`)
+房间成员：【${roomInfo.usernameList.map(async (element) => `【${element}】`).join("，")}】`)
       } else {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
-房主：【${roomBuilderName}】
+房主：【${roomInfo.roomBuilderName}】
 房间状态：【公开】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】`)
@@ -483,18 +488,18 @@ export function apply(ctx: Context, config: Config) {
   // 邀请成员
   ctx.command('OhMyGPTChat.房间.邀请 <user> <roomName>', '邀请成员')
     .action(async ({session}, user, roomName) => {
-      const {username} = session
       if (!user || !roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${session.username}】\n请检查输入的参数！`)
       }
       // 判断 user 的 type 是否为 at
-      const match = user.match(/<at\s+id="(\d+)"\s+name=".+?"\/>/);
+      const userIdRegex = /<at id="(?<userId>[^"]+)"(?: name="(?<username>[^"]+)")?\/>/;
+      const match = user.match(userIdRegex); // 检查 content 是否存在再进行匹配
 
-      if (match === null) {
-        return;
+      if (!match) {
+        return await sendMessage(session, '未找到符合要求的用户 ID。');
       }
 
-      const userId = match[1];
+      const {userId, username} = match.groups;
 
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -505,7 +510,11 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${session.username}】\n房间处于公开状态，无需邀请成员！`)
       }
       roomInfo.userIdList.push(userId);
-      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {userIdList: roomInfo.userIdList})
+      roomInfo.usernameList.push(username);
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {
+        userIdList: roomInfo.userIdList,
+        usernameList: roomInfo.usernameList
+      })
       return await sendMessage(session, `【@${session.username}】\n已成功邀请成员！`)
     })
 
@@ -538,10 +547,11 @@ export function apply(ctx: Context, config: Config) {
 
       if (index !== -1) {
         roomInfo.userIdList.splice(index, 1);
+        roomInfo.usernameList.splice(index, 1);
       } else {
         return await sendMessage(session, `【@${session.username}】\n该成员不在房间中，无法踢出！`)
       }
-      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {userIdList: roomInfo.userIdList})
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {userIdList: roomInfo.userIdList, usernameList: roomInfo.usernameList})
       return await sendMessage(session, `【@${session.username}】\n已成功踢出成员！`)
     })
 
@@ -660,6 +670,7 @@ export function apply(ctx: Context, config: Config) {
       quoteId,
       messageList,
       isRequesting,
+      roomBuilderName
     } = roomInfo[0] as OhMyGPTRoom;
 
     return {
@@ -671,7 +682,8 @@ export function apply(ctx: Context, config: Config) {
       userIdList,
       quoteId,
       messageList,
-      isRequesting
+      isRequesting,
+      roomBuilderName
     } as OhMyGPTRoom;
   }
 

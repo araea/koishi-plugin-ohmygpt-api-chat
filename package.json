@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-ohmygpt-api-chat",
   "description": "调用 [OhMyGPT](https://www.ohmygpt.com?aff=xr26JIUD) 中转接入的 Claude 官方 API （以官网为标准打五折），提供房间、聊天记录管理与预设管理系统（可瑟瑟）。",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
