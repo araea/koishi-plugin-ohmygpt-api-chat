@@ -4,8 +4,8 @@ import {} from 'koishi-plugin-monetary'
 import {} from 'koishi-plugin-markdown-to-image-service'
 
 export const inject = {
-  required: ['monetary', 'database'],
-  optional: ['markdownToImage'],
+  required: ['database'],
+  optional: ['markdownToImage', 'monetary'],
 }
 export const name = 'ohmygpt-api-chat'
 export const usage = `## 😺 使用
