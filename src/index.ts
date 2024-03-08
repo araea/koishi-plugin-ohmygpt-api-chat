@@ -561,7 +561,7 @@ export function apply(ctx: Context, config: Config) {
     })
 
   // 修改预设 xgys*
-  ctx.command('OhMyGPTChat.预设.修改 <presetName> <newPresetContent>', '修改预设')
+  ctx.command('OhMyGPTChat.预设.修改 <presetName> <newPresetContent:text>', '修改预设')
     .action(async ({session}, presetName, newPresetContent) => {
       const {username} = session
       if (!presetName || !newPresetContent) {
