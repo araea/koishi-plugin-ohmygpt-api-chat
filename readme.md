@@ -21,13 +21,14 @@
 
 ## 😺 使用
 
-1. 获取 OhMyGPT 的 API 密钥，请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD)。
-2. 启用该插件。
+1. 请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD) 获取 OhMyGPT 的 API 密钥。
+2. 为指令取合适的别名，启用该插件。
 
 ## 📚 命令列表
 
-- `OhMyGPTChat.房间.查看聊天记录/修改聊天记录/对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开`：房间管理系统。
 - `OhMyGPTChat.预设.添加/修改/删除/查看`：预设管理系统。
+- `OhMyGPTChat.房间.聊天记录.查看/修改/删除`：房间聊天记录管理系统。
+- `OhMyGPTChat.房间.对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开`：房间管理系统。
 
 ## 😎 API端点列表：
 
