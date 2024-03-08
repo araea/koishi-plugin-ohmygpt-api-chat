@@ -227,7 +227,7 @@ export function apply(ctx: Context, config: Config) {
       const result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent)
       messageList.push({role: 'assistant', content: result})
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList, isRequesting: false})
-      return await sendMessage(session, `【@${username}】\n${result}`)
+      return await sendMessage(session, `序号：【${messageList.length}】\n【@${username}】\n${result}`)
     })
 
 
