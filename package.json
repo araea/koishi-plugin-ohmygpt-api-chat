@@ -1,21 +1,46 @@
 {
   "name": "koishi-plugin-ohmygpt-api-chat",
-  "description": "",
-  "version": "0.0.1",
+  "description": "调用 OhMyGPT 官方 API 的聊天插件，提供房间与预设管理系统，暂时只对 Claude AI 有需求，所以没有其他模型。",
+  "version": "0.0.2",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
     "dist"
   ],
+  "koishi": {
+    "service": {
+      "required": [
+        "database"
+      ],
+      "optional": [
+        "monetary",
+        "markdownToImage"
+      ]
+    }
+  },
   "license": "MIT",
-  "scripts": {},
+  "author": "Nawyjx <3373167460@qq.com>",
+  "homepage": "https://www.npmjs.com/package/koishi-plugin-ohmygpt-api-chat?activeTab=readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/araea/koishi-plugin-ohmygpt-api-chat.git"
+  },
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "claude",
+    "api",
+    "chat",
+    "ohmygpt",
+    "克劳德"
   ],
-  "devDependencies": {},
+  "devDependencies": {
+    "koishi-plugin-markdown-to-image-service": "^1.1.5",
+    "koishi-plugin-monetary": "^0.1.3",
+    "koishi-plugin-puppeteer": "^3.8.2"
+  },
   "peerDependencies": {
     "koishi": "^4.17.2"
   }
