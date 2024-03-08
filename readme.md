@@ -29,6 +29,14 @@
 - `OhMyGPTChat.房间.查看聊天记录/修改聊天记录/对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开`：房间管理系统。
 - `OhMyGPTChat.预设.添加/修改/删除/查看`：预设管理系统。
 
+## 😎 API端点列表：
+
+- 美国主站直连 `稳定`、`部分地区不可用`： `https://api.ohmygpt.com`
+- Cloudflare CDN `稳定`、`全球加速`： `https://cfcus02.opapi.win`
+- Cloudflare Worker `稳定`、`全球加速`： `https://cfwus02.opapi.win`
+- 优质线路反代1 `优质线路`、`不保证可用性`： `https://aigptx.top`
+- 优质线路反代2 `优质线路`、`不保证可用性`： `https://cn2us02.opapi.win`
+
 ## 🍰 致谢
 
 - [Koishi](https://koishi.chat/) - 机器人框架
