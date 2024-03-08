@@ -15,7 +15,7 @@ export const usage = `## 😺 使用
 
 ## 📚 命令列表
 
-- \`OhMyGPTChat.房间.查看聊天记录/修改聊天记录/对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
+- \`OhMyGPTChat.房间.聊天记录.查看/聊天记录.修改/聊天记录.删除/对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
 - \`OhMyGPTChat.预设.添加/修改/删除/查看\`：预设管理系统。
 
 ## 😎 API端点列表：
@@ -605,7 +605,8 @@ export function apply(ctx: Context, config: Config) {
 
   // 查看预设
   ctx.command('OhMyGPTChat.预设.查看 <presetName>', '查看预设')
-    .action(async ({session}, presetName) => {
+    .option('all', '-a 完整预设', {fallback: false})
+    .action(async ({session, options}, presetName) => {
       const {username} = session
       if (!presetName) {
         return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
@@ -616,7 +617,7 @@ export function apply(ctx: Context, config: Config) {
       }
       const str = presetInfo.presetContent
       // 检查字符串是否超过 200 个字符
-      if (str.length > 200) {
+      if (str.length > 200 && !options.all) {
         // 如果是，将前 200 个字符切片，并附加 “…” 来表示截断
         return await sendMessage(session, `【@${username}】\n${str.slice(0, 200)}...`);
       } else {
