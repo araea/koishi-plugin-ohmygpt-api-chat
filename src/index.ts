@@ -551,7 +551,10 @@ export function apply(ctx: Context, config: Config) {
       } else {
         return await sendMessage(session, `【@${session.username}】\n该成员不在房间中，无法踢出！`)
       }
-      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {userIdList: roomInfo.userIdList, usernameList: roomInfo.usernameList})
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {
+        userIdList: roomInfo.userIdList,
+        usernameList: roomInfo.usernameList
+      })
       return await sendMessage(session, `【@${session.username}】\n已成功踢出成员！`)
     })
 
@@ -615,10 +618,9 @@ export function apply(ctx: Context, config: Config) {
       // 检查字符串是否超过 200 个字符
       if (str.length > 200) {
         // 如果是，将前 200 个字符切片，并附加 “…” 来表示截断
-        await session.send(str.slice(0, 200) + "...");
+        return await sendMessage(session, `【@${username}】\n${str.slice(0, 200)}...`);
       } else {
-        // 如果没有，则原样返回字符串
-        await session.send(str);
+        return await sendMessage(session, `【@${username}】\n${str}`);
       }
     })
 
@@ -633,7 +635,7 @@ export function apply(ctx: Context, config: Config) {
         presetList += `${i + 1}. ${presetInfo[i].presetName}\n`;
       }
       // 将 presetList 字符串发送
-      await session.send(presetList)
+      return await sendMessage(session, `【@${session.username}】\n${presetList}`)
     })
 
   // hs*
@@ -700,9 +702,9 @@ export function apply(ctx: Context, config: Config) {
         })
         .join('\n');
       const imageBuffer = await ctx.markdownToImage.convertToImage(modifiedMessage);
-      await session.send(h.image(imageBuffer, 'image/png'));
+      return await sendMessage(session, `${h.image(imageBuffer, 'image/png')}`)
     } else {
-      await session.send(message);
+      return await sendMessage(session, `${message}`)
     }
   }
 
