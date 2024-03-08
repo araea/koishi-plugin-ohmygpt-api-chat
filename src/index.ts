@@ -8,7 +8,15 @@ export const inject = {
   optional: ['markdownToImage'],
 }
 export const name = 'ohmygpt-api-chat'
-export const usage = `# 🎐 等待添加`
+export const usage = `## 😺 使用
+
+1. 获取 OhMyGPT 的 API 密钥，请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD)。
+2. 启用该插件。
+
+## 命令列表
+
+- \`OhMyGPTChat.房间.查看聊天记录/修改聊天记录/对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
+- \`OhMyGPTChat.预设.添加/修改/删除/查看\`：预设管理系统。`
 
 export interface Config {
   model: string
