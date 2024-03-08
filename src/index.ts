@@ -362,7 +362,10 @@ export function apply(ctx: Context, config: Config) {
           return await sendMessage(session, `【@${session.username}】\n非房间成员无法刷新！`)
         }
       }
-      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList: [] as MessageList})
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {
+        messageList: [] as MessageList,
+        isRequesting: false
+      })
       return await sendMessage(session, `【@${session.username}】\n刷新成功！`)
     })
 
@@ -447,7 +450,7 @@ export function apply(ctx: Context, config: Config) {
   // 房间信息
   ctx.command('OhMyGPTChat.房间.信息 <roomName>', '房间信息')
     .action(async ({session}, roomName) => {
-      const {username} = session
+      const {username, guildId} = session
       if (!roomName) {
         return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
       }
@@ -455,16 +458,17 @@ export function apply(ctx: Context, config: Config) {
       if (!roomInfo.isExist) {
         return await sendMessage(session, `【@${session.username}】\n房间名不存在！`)
       }
+      const roomBuilderName = (await session.bot.getGuildMember(guildId, roomInfo.roomBuilderId)).user.id
       if (roomInfo.isPrivate) {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
-房主：【${h.at(roomInfo.roomBuilderId)}】
+房主：【${roomBuilderName}】
 房间状态：【私有】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】
-房间成员：【${roomInfo.userIdList.map(element => `【${h.at(`${element}`)}】`).join("，")}】`)
+房间成员：【${roomInfo.userIdList.map(async (element) => `【${(await session.bot.getGuildMember(guildId, element)).user.id}】`).join("，")}】`)
       } else {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
-房主：【${h.at(roomInfo.roomBuilderId)}】
+房主：【${roomBuilderName}】
 房间状态：【公开】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】`)
@@ -719,7 +723,7 @@ export function apply(ctx: Context, config: Config) {
       return responseData.content[0].text;
     } catch (error) {
       logger.error('Error:', error);
-      return '';
+      return `请求失败，请重试！`;
     }
   };
 }
