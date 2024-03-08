@@ -702,9 +702,9 @@ export function apply(ctx: Context, config: Config) {
         })
         .join('\n');
       const imageBuffer = await ctx.markdownToImage.convertToImage(modifiedMessage);
-      return await sendMessage(session, `${h.image(imageBuffer, 'image/png')}`)
+      return await session.send(`${h.image(imageBuffer, 'image/png')}`)
     } else {
-      return await sendMessage(session, message)
+      return await session.send(`${message}`)
     }
   }
 
