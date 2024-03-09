@@ -17,7 +17,7 @@ export const usage = `## 😺 使用
 
 - \`OhMyGPTChat.预设.添加/修改/删除/查看\`：预设管理系统。
 - \`OhMyGPTChat.房间.聊天记录.查看/修改/删除\`：房间聊天记录管理系统。
-- \`OhMyGPTChat.房间.对话/创建/删除/改名/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
+- \`OhMyGPTChat.房间.对话/创建/删除/改名/修改模型/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
 
 ## 😎 API端点列表：
 
@@ -31,14 +31,20 @@ export interface Config {
   model: string
   apiEndpoint: string
   OhMyGPTApiKey: string
+  maxTokens: number
+  temperature: number
   isTextToImageConversionEnabled: boolean
 }
 
+const models = ['claude-3-opus', 'claude-3-sonnet', 'claude-2', 'claude-instant-1'];
+
 export const Config: Schema<Config> = Schema.object({
-  model: Schema.union(['claude-3-opus', 'claude-3-sonnet', 'claude-2', 'claude-instant-1']).default('claude-2').description(`模型名称。`),
+  model: Schema.union(models).default('claude-2').description(`默认使用的模型名称。`),
   apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/', 'https://aigptx.top/', 'https://cn2us02.opapi.win/']).default('https://apic.ohmygpt.com/')
     .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
+  maxTokens: Schema.number().min(0).max(4096).default(4096).description(`最大令牌数。`),
+  temperature: Schema.number().min(0).max(1).default(1).description(`温度。`),
   isTextToImageConversionEnabled: Schema.boolean().default(false).description(`是否开启将文本转为图片的功能（可选），如需启用，需要启用 \`markdownToImage\` 服务。`),
 }) as any
 
@@ -62,6 +68,7 @@ export interface OhMyGPTRoom {
   quoteId: string
   messageList: MessageList
   isRequesting: boolean;
+  roomModel: string;
   isExist?: boolean;
 }
 
@@ -92,6 +99,7 @@ export function apply(ctx: Context, config: Config) {
     roomBuilderId: 'string',
     roomBuilderName: 'string',
     quoteId: 'string',
+    roomModel: 'string',
     messageList: {type: 'json', initial: [] as MessageList}
   }, {
     autoInc: true,
@@ -125,7 +133,7 @@ export function apply(ctx: Context, config: Config) {
           ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {quoteId: session.messageId})
           session.execute(`OhMyGPTChat.房间.对话 ${roomName} ${content}`);
         } else {
-          return await sendMessage(session, `【@${session.username}】\n该房间为私有！\n请联系房主 ${roomInfo.roomBuilderName} 邀请你！`);
+          return await sendMessage(session, `【@${session.username}】\n该房间为私有！\n请联系房主【${roomInfo.roomBuilderName}】邀请你！`);
         }
       } else {
         ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {quoteId: session.messageId})
@@ -179,6 +187,8 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       } else if (messageIndex > roomInfo.messageList.length) {
         return await sendMessage(session, `【@${username}】\n消息索引超出范围！`)
+      } else if (session.userId !== roomInfo.roomBuilderId) {
+        return await sendMessage(session, `【@${session.username}】\n非房主无权修改！`)
       }
       const messageList: MessageList = roomInfo.messageList
       messageList[messageIndex - 1].content = modifiedMessage;
@@ -201,22 +211,9 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       } else if (messageIndex > roomInfo.messageList.length) {
         return await sendMessage(session, `【@${username}】\n消息索引超出范围！`)
+      } else if (session.userId !== roomInfo.roomBuilderId) {
+        return await sendMessage(session, `【@${session.username}】\n非房主无权删除！`)
       }
-      const deleteMessages = (messageIndex: number, messageList: MessageList): MessageList => {
-        // if (messageIndex <= 0 || messageIndex >= messageList.length) {
-        //   return messageList;
-        // }
-        const newMessageList = [...messageList];
-        const currentMessage = newMessageList[messageIndex - 1];
-
-        if (currentMessage.role === "user") {
-          newMessageList.splice(messageIndex - 1, 2);
-        } else if (currentMessage.role === "assistant" && messageIndex >= 2) {
-          newMessageList.splice(messageIndex - 2, 2);
-        }
-
-        return newMessageList;
-      };
       const messageList = deleteMessages(messageIndex, roomInfo.messageList);
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList})
       return await sendMessage(session, `【@${username}】\n删除成功！`)
@@ -239,20 +236,35 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       }
       roomInfo.messageList.push({role: 'user', content: message})
-      const messageList: MessageList = roomInfo.messageList
-      const result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent)
+      let messageList: MessageList = roomInfo.messageList
+      const result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent, roomInfo.roomModel === '' ? config.model : roomInfo.roomModel)
       messageList.push({role: 'assistant', content: result})
+      if (result === '请求失败，请重试！') {
+        messageList = deleteMessages(messageList.length - 1, messageList)
+      }
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList, isRequesting: false})
+      if (roomInfo.roomModel === '') {
+        await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: config.model})
+      }
       return await sendMessage(session, `序号：【${messageList.length}】\n【@${username}】\n${result}`)
     })
 
 
   // 创建房间 cj*
   ctx.command('OhMyGPTChat.房间.创建 <roomName> <roomPreset:text>', '创建房间')
-    .action(async ({session}, roomName, roomPreset) => {
+    .option('model', '-m <model> 指定模型', {fallback: undefined})
+    .action(async ({session, options}, roomName, roomPreset) => {
       if (!roomName || !roomPreset) {
         const {username} = session
         return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+      }
+      let roomModel = config.model
+      if (options.model) {
+        if (models.includes(options.model)) {
+          roomModel = options.model
+        } else {
+          return await sendMessage(session, `【@${session.username}】\n模型不存在！\n可用模型如下：\n> ${models.join('\n> ')}\n请使用 -m [模型名] 指定模型。`)
+        }
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (roomInfo.isExist) {
@@ -273,6 +285,7 @@ export function apply(ctx: Context, config: Config) {
         roomBuilderName: session.username,
         userIdList: [`${session.userId}`],
         usernameList: [`${session.username}`],
+        roomModel,
       })
       return await sendMessage(session, `【@${session.username}】\n创建成功！\n您可以直接使用下面的指令调用：\n${roomName} [文本]`)
     })
@@ -308,6 +321,26 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${session.username}】\n非房主无权修改！`)
       }
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomName: newRoomName})
+      return await sendMessage(session, `【@${session.username}】\n修改成功！`)
+    })
+
+  // 修改模型 xg*
+  ctx.command('OhMyGPTChat.房间.修改模型 <roomName> <newRoomModel>', '修改房间模型')
+    .action(async ({session}, roomName, newRoomModel) => {
+      const {username} = session
+      if (!roomName || !newRoomModel) {
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+      }
+      const roomInfo = await isRoomNameExist(roomName)
+      if (!roomInfo.isExist) {
+        return await sendMessage(session, `【@${session.username}】\n房间名不存在`)
+      } else if (session.userId !== roomInfo.roomBuilderId) {
+        return await sendMessage(session, `【@${session.username}】\n非房主无权修改！`)
+      }
+      if (!models.includes(newRoomModel)) {
+        return await sendMessage(session, `【@${session.username}】\n模型不存在！\n可用模型如下：\n> ${models.join('\n> ')}\n请使用 -m [模型名] 指定模型。`)
+      }
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: newRoomModel})
       return await sendMessage(session, `【@${session.username}】\n修改成功！`)
     })
 
@@ -469,6 +502,7 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
 房主：【${roomInfo.roomBuilderName}】
 房间状态：【私有】
+房间模型：【${roomInfo.roomModel}】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】
 房间成员：【${roomInfo.usernameList.map(async (element) => `【${element}】`).join("，")}】`)
@@ -476,12 +510,13 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
 房主：【${roomInfo.roomBuilderName}】
 房间状态：【公开】
+房间模型：【${roomInfo.roomModel}】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】`)
       }
     })
   // 清空房间列表
-  ctx.command('OhMyGPTChat.房间.清空列表', '清空房间列表')
+  ctx.command('OhMyGPTChat.房间.清空列表', '清空房间列表', {authority: 3})
     .action(async ({session}) => {
       await ctx.database.remove('OhMyGpt_rooms', {})
       return await sendMessage(session, `【@${session.username}】\n房间列表已清空！`)
@@ -641,6 +676,19 @@ export function apply(ctx: Context, config: Config) {
     })
 
   // hs*
+  function deleteMessages(messageIndex: number, messageList: MessageList): MessageList {
+    let newMessageList = [...messageList];
+    let currentMessage = newMessageList[messageIndex - 1];
+
+    if (currentMessage.role === "user") {
+      newMessageList.splice(messageIndex - 1, 2);
+    } else if (currentMessage.role === "assistant" && messageIndex >= 2) {
+      newMessageList.splice(messageIndex - 2, 2);
+    }
+
+    return newMessageList;
+  }
+
   function checkUserId(userIds: string[], userId: string) {
     if (userIds.includes(userId)) {
       return true
@@ -674,7 +722,8 @@ export function apply(ctx: Context, config: Config) {
       quoteId,
       messageList,
       isRequesting,
-      roomBuilderName
+      roomBuilderName,
+      roomModel,
     } = roomInfo[0] as OhMyGPTRoom;
 
     return {
@@ -687,7 +736,8 @@ export function apply(ctx: Context, config: Config) {
       quoteId,
       messageList,
       isRequesting,
-      roomBuilderName
+      roomBuilderName,
+      roomModel,
     } as OhMyGPTRoom;
   }
 
@@ -710,7 +760,7 @@ export function apply(ctx: Context, config: Config) {
     }
   }
 
-  async function getAnthropicResponse(messageList: MessageList, systemPrompt: string): Promise<string> {
+  async function getAnthropicResponse(messageList: MessageList, systemPrompt: string, model: string): Promise<string> {
     const url = `${config.apiEndpoint}v1/messages`;
 
     const headers = {
@@ -720,10 +770,11 @@ export function apply(ctx: Context, config: Config) {
     };
 
     const data = {
-      model: config.model,
+      model: model,
       system: systemPrompt,
-      max_tokens: 1024,
-      messages: messageList
+      max_tokens: config.maxTokens,
+      messages: messageList,
+      temperature: config.temperature,
     };
 
     try {
