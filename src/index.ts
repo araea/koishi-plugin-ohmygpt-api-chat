@@ -153,7 +153,8 @@ export function apply(ctx: Context, config: Config) {
 
   // ckltjl*
   ctx.command('OhMyGPTChat.房间.聊天记录.查看 <roomName>', '查看聊天记录')
-    .action(async ({session}, roomName) => {
+    .option('specific', '-s <messageIndex> 指定具体的消息', {fallback: undefined})
+    .action(async ({session, options}, roomName) => {
       const {username} = session
       if (!roomName) {
         return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
@@ -163,6 +164,14 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       }
       const messageList: MessageList = roomInfo.messageList
+      if (options.specific) {
+        if (isNaN(options.specific) || options.specific <= 0) {
+          return await sendMessage(session, `【@${username}】\n消息索引必须为正整数！`)
+        } else if (options.specific > roomInfo.messageList.length) {
+          return await sendMessage(session, `【@${username}】\n消息索引超出范围！`)
+        }
+        return await sendMessage(session, `【@${username}】\n聊天记录序号：【${options.specific}】\n${messageList[options.specific - 1].role === 'user' ? `【user】` : '【assistant】'}：${messageList[options.specific - 1].content}`)
+      }
       let message = ''
       for (let i = 0; i < messageList.length; i++) {
         const messageNumber = i + 1
@@ -246,7 +255,7 @@ export function apply(ctx: Context, config: Config) {
       if (roomInfo.roomModel === '') {
         await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: config.model})
       }
-      return await sendMessage(session, `序号：【${messageList.length}】\n【@${username}】\n${result}`)
+      return await sendMessage(session, `序号：【${result === '请求失败，请重试！' ? messageList.length + 2 : messageList.length}】\n【@${username}】\n${result}`)
     })
 
 
