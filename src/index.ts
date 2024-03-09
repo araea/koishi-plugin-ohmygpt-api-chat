@@ -36,10 +36,10 @@ export interface Config {
   isTextToImageConversionEnabled: boolean
 }
 
-const models = ['claude-3-opus', 'claude-3-sonnet', 'claude-2', 'claude-instant-1'];
+const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'claude-3-sonnet-20240229', 'claude-3-haiku', 'claude-2', 'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.2'];
 
 export const Config: Schema<Config> = Schema.object({
-  model: Schema.union(models).default('claude-2').description(`默认使用的模型名称。`),
+  model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
   apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/', 'https://aigptx.top/', 'https://cn2us02.opapi.win/']).default('https://apic.ohmygpt.com/')
     .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
@@ -407,6 +407,9 @@ export function apply(ctx: Context, config: Config) {
       if (!roomInfo.isExist) {
         return await sendMessage(session, `【@${session.username}】\n房间名不存在`)
       } else if (roomInfo.isPrivate) {
+        // if (session.userId !== roomInfo.roomBuilderId) {
+        //   return await sendMessage(session, `【@${session.username}】\n非房主无权刷新！`)
+        // }
         if (!checkUserId(roomInfo.userIdList, session.userId)) {
           return await sendMessage(session, `【@${session.username}】\n非房间成员无法刷新！`)
         }
