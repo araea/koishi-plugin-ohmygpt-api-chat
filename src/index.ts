@@ -811,7 +811,7 @@ export function apply(ctx: Context, config: Config) {
     const requestBody = {
       model: model,
       messages: newMessageList,
-      temperature: config.temperature * 2,
+      temperature: config.temperature,
       max_tokens: config.maxTokens,
     };
 
