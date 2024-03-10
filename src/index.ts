@@ -196,8 +196,13 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       } else if (messageIndex > roomInfo.messageList.length) {
         return await sendMessage(session, `【@${username}】\n消息索引超出范围！`)
-      } else if (session.userId !== roomInfo.roomBuilderId) {
-        return await sendMessage(session, `【@${session.username}】\n非房主无权修改！`)
+      } else if (roomInfo.isPrivate) {
+        // if (session.userId !== roomInfo.roomBuilderId) {
+        //   return await sendMessage(session, `【@${session.username}】\n非房主无权刷新！`)
+        // }
+        if (!checkUserId(roomInfo.userIdList, session.userId)) {
+          return await sendMessage(session, `【@${session.username}】\n非房间成员无法修改！`)
+        }
       }
       const messageList: MessageList = roomInfo.messageList
       messageList[messageIndex - 1].content = modifiedMessage;
@@ -220,8 +225,13 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       } else if (messageIndex > roomInfo.messageList.length) {
         return await sendMessage(session, `【@${username}】\n消息索引超出范围！`)
-      } else if (session.userId !== roomInfo.roomBuilderId) {
-        return await sendMessage(session, `【@${session.username}】\n非房主无权删除！`)
+      } else if (roomInfo.isPrivate) {
+        // if (session.userId !== roomInfo.roomBuilderId) {
+        //   return await sendMessage(session, `【@${session.username}】\n非房主无权刷新！`)
+        // }
+        if (!checkUserId(roomInfo.userIdList, session.userId)) {
+          return await sendMessage(session, `【@${session.username}】\n非房间成员无法删除！`)
+        }
       }
       const messageList = deleteMessages(messageIndex, roomInfo.messageList);
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList})
