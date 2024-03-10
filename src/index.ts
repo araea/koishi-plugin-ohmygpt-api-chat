@@ -36,7 +36,23 @@ export interface Config {
   isTextToImageConversionEnabled: boolean
 }
 
-const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'claude-3-sonnet-20240229', 'claude-3-haiku', 'claude-2', 'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.2'];
+const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'claude-3-sonnet-20240229', 'claude-3-haiku', 'claude-2', 'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.2', "gpt-3.5-turbo",
+  "gpt-3.5-turbo-0301",
+  "gpt-3.5-turbo-0613",
+  "gpt-3.5-turbo-16k",
+  "gpt-3.5-turbo-16k-0613",
+  "gpt-3.5-turbo-1106",
+  "gpt-3.5-turbo-0125",
+  "gpt-4",
+  "gpt-4-1106-preview",
+  "gpt-4-0125-preview",
+  "gpt-4-turbo-preview",
+  "gpt-4-vision-preview",
+  "gpt-4-0314",
+  "gpt-4-0613",
+  "gpt-4-32k",
+  "gpt-4-32k-0314",
+  "gpt-4-32k-0613"];
 
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
@@ -73,7 +89,7 @@ export interface OhMyGPTRoom {
 }
 
 type Message = {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
 };
 
@@ -256,15 +272,21 @@ export function apply(ctx: Context, config: Config) {
       }
       roomInfo.messageList.push({role: 'user', content: message})
       let messageList: MessageList = roomInfo.messageList
-      const result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent, roomInfo.roomModel === '' ? config.model : roomInfo.roomModel)
+      let result = ''
+      if (roomInfo.roomModel === '') {
+        await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: config.model})
+        roomInfo.roomModel = config.model
+      }
+      if (roomInfo.roomModel.includes('gpt')) {
+        result = await callOpenAIChatAPI(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
+      } else {
+        result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
+      }
       messageList.push({role: 'assistant', content: result})
       if (result === '请求失败，请重试！') {
         messageList = deleteMessages(messageList.length - 1, messageList)
       }
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList, isRequesting: false})
-      if (roomInfo.roomModel === '') {
-        await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: config.model})
-      }
       return await sendMessage(session, `序号：【${result === '请求失败，请重试！' ? messageList.length + 2 : messageList.length}】\n【@${username}】\n${result}`)
     })
 
@@ -782,6 +804,35 @@ export function apply(ctx: Context, config: Config) {
     }
   }
 
+  async function callOpenAIChatAPI(messageList: MessageList, systemPrompt: string, model: string) {
+    const url = `${config.apiEndpoint}v1/chat/completions`;
+    const newMessageList = messageList.slice()
+    newMessageList.unshift({role: 'system', content: systemPrompt})
+    const requestBody = {
+      model: model,
+      messages: newMessageList,
+      temperature: config.temperature * 2,
+      max_tokens: config.maxTokens,
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.OhMyGPTApiKey}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const responseData = await response.json();
+      return responseData.choices[0].message.content;
+    } catch (error) {
+      logger.error('Error:', error);
+      return "请求失败，请重试！";
+    }
+  }
+
   async function getAnthropicResponse(messageList: MessageList, systemPrompt: string, model: string): Promise<string> {
     const url = `${config.apiEndpoint}v1/messages`;
 
@@ -816,3 +867,4 @@ export function apply(ctx: Context, config: Config) {
     }
   };
 }
+
