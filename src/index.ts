@@ -52,7 +52,9 @@ const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'c
   "gpt-4-0613",
   "gpt-4-32k",
   "gpt-4-32k-0314",
-  "gpt-4-32k-0613"];
+  "gpt-4-32k-0613",
+  "serper",
+];
 
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
@@ -279,6 +281,8 @@ export function apply(ctx: Context, config: Config) {
       }
       if (roomInfo.roomModel.includes('gpt')) {
         result = await callOpenAIChatAPI(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
+      } else if (roomInfo.roomModel === 'serper') {
+        result = await searchAndFormatResults(message)
       } else {
         result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
       }
@@ -801,6 +805,56 @@ export function apply(ctx: Context, config: Config) {
       await session.send(`${h.image(imageBuffer, 'image/png')}`)
     } else {
       await session.send(`${message}`)
+    }
+  }
+
+  async function searchAndFormatResults(query: string): Promise<string> {
+    const url = `${config.apiEndpoint}api/v1/openapi/search/serper/v1`;
+    const params = new URLSearchParams({
+      q: query,
+      // cache: '3',
+      // gl: 'us',
+      // hl: 'en',
+      // page: '1',
+      // num: '10'
+    });
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'Apifox/1.0.0 (https://apifox.com)',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${config.OhMyGPTApiKey}`
+        },
+        body: params
+      });
+
+
+      if (response.ok) {
+        const data = await response.json();
+
+        interface SearchResult {
+          title: string;
+          link: string;
+          snippet?: string;
+          date?: string;
+          imageUrl?: string;
+        }
+
+        const formattedResults = data.organic.map((result: SearchResult, index: number) => {
+          const formattedSnippet = result.snippet ? `\n摘录：${result.snippet}` : '';
+          const formattedDate = result.date ? `\n日期：${result.date}` : '';
+          const formattedImage = result.imageUrl ? `\n预览图： ${h.image(result.imageUrl)}` : '';
+          return `${index + 1}. ${result.title} - ${result.link}${formattedSnippet}${formattedDate}${formattedImage}\n`;
+        });
+        return formattedResults.join('\n');
+      } else {
+        throw new Error('Request failed');
+      }
+    } catch (error) {
+      logger.error('Error:', error);
+      return "请求失败，请重试！";
     }
   }
 
