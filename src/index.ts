@@ -909,9 +909,9 @@ export function apply(ctx: Context, config: Config) {
   async function callOpenAIChatAPI(messageList: MessageList, systemPrompt: string, model: string) {
     const url = `${config.apiEndpoint}v1/chat/completions`;
     const newMessageList = messageList.slice()
-    if (config.apiEndpoint !== 'https://ngedlktfticp.cloud.sealos.io/') {
-      newMessageList.unshift({role: 'system', content: systemPrompt})
-    }
+    // if (config.apiEndpoint !== 'https://ngedlktfticp.cloud.sealos.io/') {
+    newMessageList.unshift({role: 'system', content: systemPrompt})
+    // }
 
     const requestBody = {
       model: model,
