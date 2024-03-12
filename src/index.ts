@@ -58,7 +58,8 @@ const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'c
 
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
-  apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/', 'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/']).default('https://apic.ohmygpt.com/')
+  apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/',
+    'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/']).default('https://apic.ohmygpt.com/')
     .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
   maxTokens: Schema.number().min(0).max(4096).default(4096).description(`最大令牌数。`),
@@ -279,7 +280,7 @@ export function apply(ctx: Context, config: Config) {
         await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: config.model})
         roomInfo.roomModel = config.model
       }
-      if (roomInfo.roomModel.includes('gpt')) {
+      if (roomInfo.roomModel.includes('gpt') || config.apiEndpoint === 'https://ngedlktfticp.cloud.sealos.io/') {
         result = await callOpenAIChatAPI(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
       } else if (roomInfo.roomModel === 'serper') {
         result = await searchAndFormatResults(message)
@@ -908,7 +909,10 @@ export function apply(ctx: Context, config: Config) {
   async function callOpenAIChatAPI(messageList: MessageList, systemPrompt: string, model: string) {
     const url = `${config.apiEndpoint}v1/chat/completions`;
     const newMessageList = messageList.slice()
-    newMessageList.unshift({role: 'system', content: systemPrompt})
+    if (config.apiEndpoint !== 'https://ngedlktfticp.cloud.sealos.io/') {
+      newMessageList.unshift({role: 'system', content: systemPrompt})
+    }
+
     const requestBody = {
       model: model,
       messages: newMessageList,
