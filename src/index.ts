@@ -17,7 +17,7 @@ export const usage = `## 😺 使用
 
 - \`OhMyGPTChat.预设.添加/修改/删除/查看\`：预设管理系统。
 - \`OhMyGPTChat.房间.聊天记录.查看/修改/删除\`：房间聊天记录管理系统。
-- \`OhMyGPTChat.房间.对话/创建/删除/改名/修改模型/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
+- \`OhMyGPTChat.房间.对话/创建/删除/改名/模型列表/修改模型/修改预设/查看预设/刷新/私有/公开\`：房间管理系统。
 
 ## 😎 API端点列表：
 
@@ -58,7 +58,7 @@ const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'c
 
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
-  apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/', 'https://aigptx.top/', 'https://cn2us02.opapi.win/','https://ngedlktfticp.cloud.sealos.io/']).default('https://apic.ohmygpt.com/')
+  apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/', 'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/']).default('https://apic.ohmygpt.com/')
     .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
   maxTokens: Schema.number().min(0).max(4096).default(4096).description(`最大令牌数。`),
@@ -336,21 +336,44 @@ export function apply(ctx: Context, config: Config) {
     })
 
   // 删除房间 sc*
-  ctx.command('OhMyGPTChat.房间.删除 <roomName>', '删除房间')
+  ctx.command('OhMyGPTChat.房间.删除 <roomName:text>', '删除房间')
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        await sendMessage(session, `【@${username}】\n请检查输入的参数！`);
+        return;
       }
-      const roomInfo = await isRoomNameExist(roomName)
-      if (!roomInfo.isExist) {
-        return await sendMessage(session, `【@${session.username}】\n房间名不存在`)
-      } else if (session.userId !== roomInfo.roomBuilderId) {
-        return await sendMessage(session, `【@${session.username}】\n非房主无权删除！`)
+
+      const roomNames = roomName.split(' ');
+      let successRooms = [];
+      let failedRooms = [];
+
+      for (let room of roomNames) {
+        const roomInfo = await isRoomNameExist(room)
+        if (!roomInfo.isExist || session.userId !== roomInfo.roomBuilderId) {
+          failedRooms.push(room);
+          continue;
+        }
+        await ctx.database.remove('OhMyGpt_rooms', {roomName: room})
+        successRooms.push(room);
       }
-      await ctx.database.remove('OhMyGpt_rooms', {roomName: roomName})
-      return await sendMessage(session, `【@${session.username}】\n删除成功！`)
+
+      let message = '';
+      if (successRooms.length > 0) {
+        message += `【@${session.username}】\n房间 ${successRooms.join(', ')} 删除成功！\n`;
+      }
+      if (failedRooms.length > 0) {
+        message += `【@${session.username}】\n房间 ${failedRooms.join(', ')} 删除失败！\n`;
+        if (failedRooms.some(async (room) => !(await isRoomNameExist(room)).isExist)) {
+          message += `原因：部分房间不存在。\n`;
+        }
+        if (failedRooms.some(async (room) => session.userId !== (await isRoomNameExist(room)).roomBuilderId)) {
+          message += `原因：部分房间你无权删除。\n`;
+        }
+      }
+      await sendMessage(session, message);
     })
+
 
   // 修改房间名 xg*
   ctx.command('OhMyGPTChat.房间.改名 <roomName> <newRoomName>', '修改房间名')
@@ -383,10 +406,17 @@ export function apply(ctx: Context, config: Config) {
         return await sendMessage(session, `【@${session.username}】\n非房主无权修改！`)
       }
       if (!models.includes(newRoomModel)) {
-        return await sendMessage(session, `【@${session.username}】\n模型不存在！\n可用模型如下：\n> ${models.join('\n> ')}\n请使用 -m [模型名] 指定模型。`)
+        return await sendMessage(session, `【@${session.username}】\n模型不存在！\n可用模型如下：\n> ${models.join('\n> ')}`)
       }
       await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: newRoomModel})
       return await sendMessage(session, `【@${session.username}】\n修改成功！`)
+    })
+
+  // 模型列表
+  ctx.command('OhMyGPTChat.房间.模型列表', '查看可用模型列表')
+    .action(async ({session}, roomName, newRoomModel) => {
+      const {username} = session
+      return await sendMessage(session, `【@${session.username}】\n当前可用模型如下：\n> ${models.join('\n> ')}`)
     })
 
   // 修改房间预设
@@ -433,28 +463,45 @@ export function apply(ctx: Context, config: Config) {
     })
 
   // 刷新房间 sx*
-  ctx.command('OhMyGPTChat.房间.刷新 <roomName>', '刷新房间')
+  ctx.command('OhMyGPTChat.房间.刷新 <roomName:text>', '刷新房间')
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return;
       }
-      const roomInfo = await isRoomNameExist(roomName)
-      if (!roomInfo.isExist) {
-        return await sendMessage(session, `【@${session.username}】\n房间名不存在`)
-      } else if (roomInfo.isPrivate) {
-        // if (session.userId !== roomInfo.roomBuilderId) {
-        //   return await sendMessage(session, `【@${session.username}】\n非房主无权刷新！`)
-        // }
-        if (!checkUserId(roomInfo.userIdList, session.userId)) {
-          return await sendMessage(session, `【@${session.username}】\n非房间成员无法刷新！`)
+
+      const roomNames = roomName.split(' ');
+      let successRooms = [];
+      let failedRooms = [];
+
+      for (let room of roomNames) {
+        const roomInfo = await isRoomNameExist(room)
+        if (!roomInfo.isExist || (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId))) {
+          failedRooms.push(room);
+          continue;
+        }
+        await ctx.database.set('OhMyGpt_rooms', {roomName: room}, {
+          messageList: [] as MessageList,
+          isRequesting: false
+        })
+        successRooms.push(room);
+      }
+
+      let message = '';
+      if (successRooms.length > 0) {
+        message += `【@${session.username}】\n房间 ${successRooms.join(', ')} 刷新成功！\n`;
+      }
+      if (failedRooms.length > 0) {
+        message += `【@${session.username}】\n房间 ${failedRooms.join(', ')} 刷新失败！\n`;
+        if (failedRooms.some(async (room) => !(await isRoomNameExist(room)).isExist)) {
+          message += `原因：部分房间不存在。\n`;
+        }
+        if (failedRooms.some(async (room) => (await isRoomNameExist(room)).isPrivate && !checkUserId((await isRoomNameExist(room)).userIdList, session.userId))) {
+          message += `原因：部分房间你无权刷新。\n`;
         }
       }
-      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {
-        messageList: [] as MessageList,
-        isRequesting: false
-      })
-      return await sendMessage(session, `【@${session.username}】\n刷新成功！`)
+      await sendMessage(session, message);
     })
 
   // 私有房间
