@@ -36,7 +36,9 @@ export interface Config {
   isTextToImageConversionEnabled: boolean
 }
 
-const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'claude-3-sonnet-20240229', 'claude-3-haiku', 'claude-2', 'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.2', "gpt-3.5-turbo",
+// pzx*
+const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'claude-3-sonnet-20240229', 'claude-3-haiku', 'claude-3-haiku-20240307', 'claude-2', 'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.2',
+  "gpt-3.5-turbo",
   "gpt-3.5-turbo-0301",
   "gpt-3.5-turbo-0613",
   "gpt-3.5-turbo-16k",
