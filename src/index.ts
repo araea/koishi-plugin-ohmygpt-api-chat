@@ -822,6 +822,7 @@ export function apply(ctx: Context, config: Config) {
       isRequesting,
       roomBuilderName,
       roomModel,
+      usernameList,
     } = roomInfo[0] as OhMyGPTRoom;
 
     return {
@@ -836,6 +837,7 @@ export function apply(ctx: Context, config: Config) {
       isRequesting,
       roomBuilderName,
       roomModel,
+      usernameList,
     } as OhMyGPTRoom;
   }
 
