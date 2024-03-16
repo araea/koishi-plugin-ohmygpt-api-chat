@@ -603,7 +603,7 @@ export function apply(ctx: Context, config: Config) {
 房间模型：【${roomInfo.roomModel}】
 房间预设名：【${roomInfo.roomPresetName}】
 预设概览：【${roomInfo.roomPresetContent.length > 50 ? roomInfo.roomPresetContent.slice(0, 50) + "..." : roomInfo.roomPresetContent}】
-房间成员：【${roomInfo.usernameList.map(async (element) => `【${element}】`).join("，")}】`)
+房间成员：【${roomInfo.usernameList.map((element) => `【${element}】`).join("，")}】`)
       } else {
         return await sendMessage(session, `【@${session.username}】\n房间名：【${roomName}】
 房主：【${roomInfo.roomBuilderName}】
