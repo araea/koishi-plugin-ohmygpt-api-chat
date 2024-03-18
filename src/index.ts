@@ -470,7 +470,7 @@ export function apply(ctx: Context, config: Config) {
     .option('all', '-a 刷新所有房间', {fallback: false})
     .action(async ({session,options}, roomName) => {
       const {username} = session
-      if (!roomName) {
+      if (!roomName && !options.all) {
         await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
         return;
       }
