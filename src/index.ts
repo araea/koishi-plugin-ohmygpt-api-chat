@@ -475,7 +475,6 @@ export function apply(ctx: Context, config: Config) {
         return;
       }
 
-      const roomNames = roomName.split(' ');
       let successRooms = [];
       let failedRooms = [];
 
@@ -495,6 +494,7 @@ export function apply(ctx: Context, config: Config) {
           successRooms.push(room);
         }
       } else {
+        const roomNames = roomName.split(' ');
         for (let room of roomNames) {
           const roomInfo = await isRoomNameExist(room)
           if (!roomInfo.isExist || (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId))) {
