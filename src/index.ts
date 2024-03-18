@@ -467,7 +467,8 @@ export function apply(ctx: Context, config: Config) {
 
   // 刷新房间 sx*
   ctx.command('OhMyGPTChat.房间.刷新 <roomName:text>', '刷新房间')
-    .action(async ({session}, roomName) => {
+    .option('all', '-a 刷新所有房间', {fallback: false})
+    .action(async ({session,options}, roomName) => {
       const {username} = session
       if (!roomName) {
         await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
@@ -478,17 +479,34 @@ export function apply(ctx: Context, config: Config) {
       let successRooms = [];
       let failedRooms = [];
 
-      for (let room of roomNames) {
-        const roomInfo = await isRoomNameExist(room)
-        if (!roomInfo.isExist || (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId))) {
-          failedRooms.push(room);
-          continue;
+      if (options.all) {
+        const rooms: OhMyGPTRoom[] = await ctx.database.get('OhMyGpt_rooms', {})
+        const allRooms = rooms.map(room => room.roomName);
+        for (let room of allRooms) {
+          const roomInfo = await isRoomNameExist(room);
+          if (!roomInfo.isExist || (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId))) {
+            failedRooms.push(room);
+            continue;
+          }
+          await ctx.database.set('OhMyGpt_rooms', { roomName: room }, {
+            messageList: [] as MessageList,
+            isRequesting: false
+          });
+          successRooms.push(room);
         }
-        await ctx.database.set('OhMyGpt_rooms', {roomName: room}, {
-          messageList: [] as MessageList,
-          isRequesting: false
-        })
-        successRooms.push(room);
+      } else {
+        for (let room of roomNames) {
+          const roomInfo = await isRoomNameExist(room)
+          if (!roomInfo.isExist || (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId))) {
+            failedRooms.push(room);
+            continue;
+          }
+          await ctx.database.set('OhMyGpt_rooms', {roomName: room}, {
+            messageList: [] as MessageList,
+            isRequesting: false
+          })
+          successRooms.push(room);
+        }
       }
 
       let message = '';
