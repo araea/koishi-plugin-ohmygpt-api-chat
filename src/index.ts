@@ -275,6 +275,10 @@ export function apply(ctx: Context, config: Config) {
       if (!roomInfo.isExist) {
         return await sendMessage(session, `【@${username}】\n房间名不存在！`)
       }
+      if (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId)) {
+        await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {isRequesting: false})
+        return await sendMessage(session, `【@${session.username}】\n该房间为私有！\n请联系房主【${roomInfo.roomBuilderName}】邀请你！`)
+      }
       roomInfo.messageList.push({role: 'user', content: message})
       let messageList: MessageList = roomInfo.messageList
       let result = ''
@@ -297,6 +301,52 @@ export function apply(ctx: Context, config: Config) {
       return await sendMessage(session, `序号：【${result === '请求失败，请重试！' ? messageList.length + 2 : messageList.length}】\n【@${username}】\n${result}`)
     })
 
+  // cxhd*
+  ctx.command('OhMyGPTChat.房间.重新回答 <roomName>', '重新回答')
+    .action(async ({session}, roomName) => {
+      const {username} = session
+      if (!roomName) {
+        await session.execute(`OhMyGPTChat.房间.重新回答 -h`)
+        return
+      }
+      const roomInfo = await isRoomNameExist(roomName)
+      if (roomInfo.isRequesting) {
+        return await sendMessage(session, `【@${username}】\n该房间暂不空闲，请稍后再试！`)
+      }
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {isRequesting: true})
+      if (!roomInfo.isExist) {
+        return await sendMessage(session, `【@${username}】\n房间名不存在！`)
+      }
+      if (roomInfo.isPrivate && !checkUserId(roomInfo.userIdList, session.userId)) {
+        await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {isRequesting: false})
+        return await sendMessage(session, `【@${session.username}】\n该房间为私有！\n请联系房主【${roomInfo.roomBuilderName}】邀请你！`)
+      }
+      let messageList: MessageList = roomInfo.messageList
+      if (messageList.length < 2) {
+        return await sendMessage(session, `【@${username}】\n没有足够的对话记录！`)
+      }
+      const message = messageList[messageList.length - 2].content;
+      messageList = deleteMessages(messageList.length - 1, messageList)
+      messageList.push({role: 'user', content: message})
+      let result = ''
+      if (roomInfo.roomModel === '') {
+        await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {roomModel: config.model})
+        roomInfo.roomModel = config.model
+      }
+      if (roomInfo.roomModel.includes('gpt') || config.apiEndpoint === 'https://ngedlktfticp.cloud.sealos.io/') {
+        result = await callOpenAIChatAPI(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
+      } else if (roomInfo.roomModel === 'serper') {
+        result = await searchAndFormatResults(message)
+      } else {
+        result = await getAnthropicResponse(messageList, roomInfo.roomPresetContent, roomInfo.roomModel)
+      }
+      messageList.push({role: 'assistant', content: result})
+      if (result === '请求失败，请重试！') {
+        messageList = deleteMessages(messageList.length - 1, messageList)
+      }
+      await ctx.database.set('OhMyGpt_rooms', {roomName: roomName}, {messageList, isRequesting: false})
+      return await sendMessage(session, `序号：【${result === '请求失败，请重试！' ? messageList.length + 2 : messageList.length}】\n【@${username}】\n${result}`)
+    })
 
   // 创建房间 cj*
   ctx.command('OhMyGPTChat.房间.创建 <roomName> <roomPreset:text>', '创建房间')
@@ -468,7 +518,7 @@ export function apply(ctx: Context, config: Config) {
   // 刷新房间 sx*
   ctx.command('OhMyGPTChat.房间.刷新 <roomName:text>', '刷新房间')
     .option('all', '-a 刷新所有房间', {fallback: false})
-    .action(async ({session,options}, roomName) => {
+    .action(async ({session, options}, roomName) => {
       const {username} = session
       if (!roomName && !options.all) {
         await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
@@ -487,7 +537,7 @@ export function apply(ctx: Context, config: Config) {
             failedRooms.push(room);
             continue;
           }
-          await ctx.database.set('OhMyGpt_rooms', { roomName: room }, {
+          await ctx.database.set('OhMyGpt_rooms', {roomName: room}, {
             messageList: [] as MessageList,
             isRequesting: false
           });
