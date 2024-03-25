@@ -11,7 +11,7 @@ export const name = 'ohmygpt-api-chat'
 export const usage = `## 😺 使用
 
 1. 请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD) 获取 OhMyGPT 的 API 密钥。
-2. 为指令取合适的别名，启用该插件。
+2. 选择合适的 API 端点，并为指令取合适的别名，启用该插件。
 
 ## 📚 命令列表
 
@@ -178,7 +178,10 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session, options}, roomName) => {
       const {username} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名
+> 指令名 房间名 -s 消息索引 （查看指定消息）`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -207,7 +210,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName, messageIndex, modifiedMessage) => {
       const {username} = session
       if (!roomName || !messageIndex) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 消息索引 修改后的消息内容`)
       }
       if (isNaN(messageIndex) || messageIndex <= 0) {
         return await sendMessage(session, `【@${username}】\n消息索引必须为正整数！`)
@@ -236,7 +241,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName, messageIndex) => {
       const {username} = session
       if (!roomName || !messageIndex) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 消息索引`)
       }
       if (isNaN(messageIndex) || messageIndex <= 0) {
         return await sendMessage(session, `【@${username}】\n消息索引必须为正整数！`)
@@ -264,8 +271,12 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName, message) => {
       const {username} = session
       if (!roomName || !message) {
-        await session.execute(`OhMyGPTChat.房间.对话 -h`)
-        return
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 文本
+
+注意：一般不使用该指令，而是直接：
+> 房间名 文本`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (roomInfo.isRequesting) {
@@ -306,8 +317,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        await session.execute(`OhMyGPTChat.房间.重新回答 -h`)
-        return
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (roomInfo.isRequesting) {
@@ -354,7 +366,12 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session, options}, roomName, roomPreset) => {
       if (!roomName || !roomPreset) {
         const {username} = session
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 预设内容
+> 指令名 -m 模型名 房间名 预设内容 （指定房间模型）
+
+小提示：可使用相关指令查看可用模型列表`)
       }
       let roomModel = config.model
       if (options.model) {
@@ -393,7 +410,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        await sendMessage(session, `【@${username}】\n请检查输入的参数！`);
+        await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名`);
         return;
       }
 
@@ -433,7 +452,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName, newRoomName) => {
       const {username} = session
       if (!roomName || !newRoomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 新房间名`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -450,7 +471,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName, newRoomModel) => {
       const {username} = session
       if (!roomName || !newRoomModel) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 新模型`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -477,7 +500,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName, newPreset) => {
       const {username} = session
       if (!roomName || !newPreset) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 新预设内容`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -498,19 +523,21 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
         return await sendMessage(session, `【@${session.username}】\n房间名不存在`)
       }
       const str = roomInfo.roomPresetContent
-      // 检查字符串是否超过 200 个字符
+
       if (str.length > 200) {
-        // 如果是，将前 200 个字符切片，并附加 “…” 来表示截断
+
         return await sendMessage(session, `【@${session.username}】\n${str.slice(0, 200) + "..."}`);
       } else {
-        // 如果没有，则原样返回字符串
+
         return await sendMessage(session, `【@${session.username}】\n${str}`);
       }
     })
@@ -521,7 +548,10 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session, options}, roomName) => {
       const {username} = session
       if (!roomName && !options.all) {
-        await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名
+> 指令名 -a (刷新所有房间)`);
         return;
       }
 
@@ -580,7 +610,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -599,7 +631,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName) => {
       const {username} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -617,11 +651,13 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('OhMyGPTChat.房间.转移 <roomName> <user>', '转移房间')
     .action(async ({session}, roomName, user) => {
       if (!user || !roomName) {
-        return await sendMessage(session, `【@${session.username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${session.username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名 用户名`)
       }
-      // 判断 user 的 type 是否为 at
+
       const userIdRegex = /<at id="(?<userId>[^"]+)"(?: name="(?<username>[^"]+)")?\/>/;
-      const match = user.match(userIdRegex); // 检查 content 是否存在再进行匹配
+      const match = user.match(userIdRegex);
 
       if (!match) {
         return await sendMessage(session, '未找到符合要求的用户 ID。');
@@ -643,13 +679,10 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('OhMyGPTChat.房间.列表', '房间列表')
     .action(async ({session}) => {
       const roomInfo = await ctx.database.get('OhMyGpt_rooms', {})
-      // 初始化一个空字符串来存储房间列表
       let roomList: string = "";
-      // 循环遍历输入数组，并在 roomList 字符串中添加带有数字和换行符的每个房间名
       for (let i = 0; i < roomInfo.length; i++) {
         roomList += `${i + 1}. ${roomInfo[i].roomName}\n`;
       }
-      // 将 roomList 字符串发送
       return await sendMessage(session, `【@${session.username}】\n${roomList}`)
     })
 
@@ -658,7 +691,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, roomName) => {
       const {username, guildId} = session
       if (!roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 房间名`)
       }
       const roomInfo = await isRoomNameExist(roomName)
       if (!roomInfo.isExist) {
@@ -691,11 +726,13 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('OhMyGPTChat.房间.邀请 <user> <roomName>', '邀请成员')
     .action(async ({session}, user, roomName) => {
       if (!user || !roomName) {
-        return await sendMessage(session, `【@${session.username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${session.username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 用户名 房间名`)
       }
-      // 判断 user 的 type 是否为 at
+
       const userIdRegex = /<at id="(?<userId>[^"]+)"(?: name="(?<username>[^"]+)")?\/>/;
-      const match = user.match(userIdRegex); // 检查 content 是否存在再进行匹配
+      const match = user.match(userIdRegex);
 
       if (!match) {
         return await sendMessage(session, '未找到符合要求的用户 ID。');
@@ -726,7 +763,9 @@ export function apply(ctx: Context, config: Config) {
       const {username} = session
 
       if (!user || !roomName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 用户名 房间名`)
       }
       // 判断 user 的 type 是否为 at
       const match = user.match(/<at\s+id="(\d+)"\s+name=".+?"\/>/);
@@ -765,7 +804,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, presetName, presetContent) => {
       const {username} = session
       if (!presetName || !presetContent) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 预设名 预设内容`)
       }
       const presetInfo = await isPresetNameExist(presetName)
       if (presetInfo.isExist) {
@@ -780,7 +821,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, presetName) => {
       const {username} = session
       if (!presetName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 预设名`)
       }
       const presetInfo = await isPresetNameExist(presetName)
       if (!presetInfo.isExist) {
@@ -795,7 +838,9 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session}, presetName, newPresetContent) => {
       const {username} = session
       if (!presetName || !newPresetContent) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 预设名 新预设内容`)
       }
       const presetInfo = await isPresetNameExist(presetName)
       if (!presetInfo.isExist) {
@@ -811,16 +856,19 @@ export function apply(ctx: Context, config: Config) {
     .action(async ({session, options}, presetName) => {
       const {username} = session
       if (!presetName) {
-        return await sendMessage(session, `【@${username}】\n请检查输入的参数！`)
+        return await sendMessage(session, `【@${username}】\n请检查输入的参数！
+使用示例如下：
+> 指令名 预设名
+> 指令名 -a 预设名 （查看完整预设）`)
       }
       const presetInfo = await isPresetNameExist(presetName)
       if (!presetInfo.isExist) {
         return await sendMessage(session, `【@${session.username}】\n预设不存在！`)
       }
       const str = presetInfo.presetContent
-      // 检查字符串是否超过 200 个字符
+
       if (str.length > 200 && !options.all) {
-        // 如果是，将前 200 个字符切片，并附加 “…” 来表示截断
+
         return await sendMessage(session, `【@${username}】\n${str.slice(0, 200)}...`);
       } else {
         return await sendMessage(session, `【@${username}】\n${str}`);
@@ -831,13 +879,13 @@ export function apply(ctx: Context, config: Config) {
   ctx.command('OhMyGPTChat.预设.列表', '预设列表')
     .action(async ({session}) => {
       const presetInfo = await ctx.database.get('OhMyGpt_presets', {})
-      // 初始化一个空字符串来存储房间列表
+
       let presetList: string = "";
-      // 循环遍历输入数组，并在 presetList 字符串中添加带有数字和换行符的每个房间名
+
       for (let i = 0; i < presetInfo.length; i++) {
         presetList += `${i + 1}. ${presetInfo[i].presetName}\n`;
       }
-      // 将 presetList 字符串发送
+
       return await sendMessage(session, `【@${session.username}】\n${presetList}`)
     })
 
