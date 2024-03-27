@@ -25,7 +25,13 @@ export const usage = `## 😺 使用
 - Cloudflare CDN \`稳定\`、\`全球加速\`： \`https://cfcus02.opapi.win\`
 - Cloudflare Worker \`稳定\`、\`全球加速\`： \`https://cfwus02.opapi.win\`
 - 优质线路反代1 \`优质线路\`、\`不保证可用性\`： \`https://aigptx.top\`
-- 优质线路反代2 \`优质线路\`、\`不保证可用性\`： \`https://cn2us02.opapi.win\``
+- 优质线路反代2 \`优质线路\`、\`不保证可用性\`： \`https://cn2us02.opapi.win\`
+
+### 第三方 API 端点（非 OhMyGPT）
+
+- https://api.88.ls/ - 88ls API
+- https://ngedlktfticp.cloud.sealos.io/ - Happy API
+`
 
 export interface Config {
   model: string
@@ -61,7 +67,7 @@ const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'c
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
   apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/',
-    'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/']).default('https://apic.ohmygpt.com/')
+    'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/','https://api.88.ls/']).default('https://apic.ohmygpt.com/')
     .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
   maxTokens: Schema.number().min(0).max(4096).default(4096).description(`最大令牌数。`),
