@@ -656,6 +656,7 @@ export function apply(ctx: Context, config: Config) {
 > 指令名 房间名 用户名`)
       }
 
+      user = await replaceAtTags(session, user)
       const userIdRegex = /<at id="(?<userId>[^"]+)"(?: name="(?<username>[^"]+)")?\/>/;
       const match = user.match(userIdRegex);
 
@@ -731,6 +732,7 @@ export function apply(ctx: Context, config: Config) {
 > 指令名 用户名 房间名`)
       }
 
+      user = await replaceAtTags(session, user)
       const userIdRegex = /<at id="(?<userId>[^"]+)"(?: name="(?<username>[^"]+)")?\/>/;
       const match = user.match(userIdRegex);
 
@@ -767,6 +769,7 @@ export function apply(ctx: Context, config: Config) {
 使用示例如下：
 > 指令名 用户名 房间名`)
       }
+      user = await replaceAtTags(session, user)
       // 判断 user 的 type 是否为 at
       const match = user.match(/<at\s+id="(\d+)"\s+name=".+?"\/>/);
 
@@ -890,6 +893,29 @@ export function apply(ctx: Context, config: Config) {
     })
 
   // hs*
+  async function replaceAtTags(session, content: string): Promise<string> {
+    // 正则表达式用于匹配 at 标签
+    const atRegex = /<at id="(\d+)"(?: name="([^"]*)")?\/>/g;
+
+    // 匹配所有 at 标签
+    let match;
+    while ((match = atRegex.exec(content)) !== null) {
+      const userId = match[1];
+      const name = match[2];
+
+      // 如果 name 不存在，根据 userId 获取相应的 name
+      if (!name) {
+        const guildMember = await session.bot.getGuildMember(session.guildId, userId);
+
+        // 替换原始的 at 标签
+        const newAtTag = `<at id="${userId}" name="${guildMember.name}"/>`;
+        content = content.replace(match[0], newAtTag);
+      }
+    }
+
+    return content;
+  }
+
   function deleteMessages(messageIndex: number, messageList: MessageList): MessageList {
     let newMessageList = [...messageList];
     let currentMessage = newMessageList[messageIndex - 1];
