@@ -993,21 +993,30 @@ export function apply(ctx: Context, config: Config) {
   async function sendMessage(session: any, message: any): Promise<void> {
     if (config.isTextToImageConversionEnabled) {
       const lines = message.split('\n');
+      let inCodeBlock = false; // 标记是否在代码块中
+
       const modifiedMessage = lines
         .map((line) => {
-          if (line.trim() !== '' && !line.includes('<img')) {
-            return `# ${line}`;
+          if (line.trim().startsWith('```')) {
+            inCodeBlock = !inCodeBlock; // 切换代码块状态
+            return line + '\n'; // 将代码块行保持原样
+          }
+
+          if (inCodeBlock || line.trim() === '' || line.includes('<img')) {
+            return line + '\n'; // 在代码块内或者为空行或者包含<img时保持原样
           } else {
-            return line + '\n';
+            return `# ${line}`; // 其他情况在行首加 #
           }
         })
         .join('\n');
+
       const imageBuffer = await ctx.markdownToImage.convertToImage(modifiedMessage);
-      await session.send(`${h.image(imageBuffer, 'image/png')}`)
+      await session.send(`${h.image(imageBuffer, 'image/png')}`);
     } else {
-      await session.send(`${message}`)
+      await session.send(`${message}`);
     }
   }
+
 
   async function searchAndFormatResults(query: string): Promise<string> {
     const url = `${config.apiEndpoint}api/v1/openapi/search/serper/v1`;
