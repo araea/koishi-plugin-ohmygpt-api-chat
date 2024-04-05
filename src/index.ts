@@ -10,8 +10,8 @@ export const inject = {
 export const name = 'ohmygpt-api-chat'
 export const usage = `## 😺 使用
 
-1. 请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD) 获取 OhMyGPT 的 API 密钥。
-2. 选择合适的 API 端点，并为指令取合适的别名，启用该插件。
+1. 请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD) 或 [钱多多API官网](https://fast.aigcbest.top/register?aff=FDQw) 获取 API 密钥。
+2. 为指令取合适的别名，启用该插件。
 
 ## 📚 命令列表
 

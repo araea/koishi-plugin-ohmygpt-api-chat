@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-ohmygpt-api-chat",
   "description": "调用 OhMyGpt、88ls、Happy、[钱多多](https://fast.aigcbest.top/register?aff=FDQw)的 API，提供房间、聊天记录管理与预设管理系统。",
-  "version": "1.3.7",
+  "version": "1.3.8",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
