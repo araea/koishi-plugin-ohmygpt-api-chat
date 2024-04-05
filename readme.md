@@ -4,7 +4,7 @@
 
 # 🎈 介绍
 
-- 调用 OhMyGPT 官方 API 的聊天插件，提供房间与预设管理系统。
+调用 OhMyGpt、88ls、Happy、钱多多的 API，提供房间、聊天记录管理与预设管理系统。
 
 ## 🎐 功能特性
 
@@ -21,7 +21,7 @@
 
 ## 😺 使用
 
-1. 请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD) 获取 OhMyGPT 的 API 密钥。
+1. 请前往 [OhMyGPT 官网](https://www.ohmygpt.com?aff=xr26JIUD) 或 [钱多多API官网](https://fast.aigcbest.top/register?aff=FDQw) 获取 API 密钥。
 2. 为指令取合适的别名，启用该插件。
 
 ## 📚 命令列表
@@ -39,10 +39,12 @@
 - 优质线路反代1 `优质线路`、`不保证可用性`： `https://aigptx.top`
 - 优质线路反代2 `优质线路`、`不保证可用性`： `https://cn2us02.opapi.win`
 
-### 🪄 第三方 API 端点（非 OhMyGPT）
+### 🪄 第三方 API 端点（非 OhMyGPT）：
 
 - https://api.88.ls/ - 88ls API
 - https://ngedlktfticp.cloud.sealos.io/ - Happy API
+- https://api.aigcbest.top/ - 钱多多 API(1)
+- https://aigcbest.top/ - 钱多多 API(2)
 
 ## 🍰 致谢
 
