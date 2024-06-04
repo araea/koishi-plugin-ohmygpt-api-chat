@@ -43,7 +43,7 @@
 
 - https://api.88.ls/ - 88ls API
 - https://ngedlktfticp.cloud.sealos.io/ - Happy API
-- https://api.aigcbest.top/ - 钱多多 API(1)
+- https://api2.aigcbest.top/ - 钱多多 API(1)
 - https://aigcbest.top/ - 钱多多 API(2)
 
 ## 🍰 致谢
@@ -51,6 +51,14 @@
 - [Koishi](https://koishi.chat/) - 机器人框架
 - [OhMyGPT](https://www.ohmygpt.com?aff=xr26JIUD) - 便捷地无限量访问先进的AI模型
 
-## 许可证
+## 🐱 QQ 群
 
-[MIT](https://opensource.org/licenses/MIT) License © 2024
+- 956758505
+
+## ✨ License
+
+MIT License © 2024
+
+希望您喜欢这款插件！ 💫
+
+如有任何问题或建议，欢迎联系我哈~ 🎈

@@ -32,8 +32,12 @@ export const usage = `## 😺 使用
 
 - https://api.88.ls/ - 88ls API
 - https://ngedlktfticp.cloud.sealos.io/ - Happy API
-- https://api.aigcbest.top/ - 钱多多 API(1)
+- https://api2.aigcbest.top/ - 钱多多 API(1)
 - https://aigcbest.top/ - 钱多多 API(2)
+
+## 🐱 QQ 群
+
+- 956758505
 `
 
 export interface Config {
@@ -70,7 +74,7 @@ const models = ['claude-3-opus', 'claude-3-opus-20240229', 'claude-3-sonnet', 'c
 export const Config: Schema<Config> = Schema.object({
   model: Schema.union(models).default('claude-2.1').description(`默认使用的模型名称。`),
   apiEndpoint: Schema.union(['https://api.ohmygpt.com/', 'https://apic.ohmygpt.com/', 'https://cfwus02.opapi.win/', 'https://cfcus02.opapi.win/',
-    'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/','https://api.88.ls/','https://api.aigcbest.top/','https://aigcbest.top/']).default('https://apic.ohmygpt.com/')
+    'https://aigptx.top/', 'https://cn2us02.opapi.win/', 'https://ngedlktfticp.cloud.sealos.io/','https://api.88.ls/','https://api2.aigcbest.top/','https://aigcbest.top/']).default('https://apic.ohmygpt.com/')
     .description(`API 端点。`),
   OhMyGPTApiKey: Schema.string().required().description(`OhMyGPT 的官方 API 密钥。`),
   maxTokens: Schema.number().min(0).max(4096).default(4096).description(`最大令牌数。`),
